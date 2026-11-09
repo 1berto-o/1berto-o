@@ -1,42 +1,83 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-label="Humberto Bezerra de Oliveira — Cloud, Infrastructure, DevOps">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-label="Humberto Bezerra de Oliveira — Cloud Computing, Infrastructure, DevOps">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0B0B12"/>
-      <stop offset="55%" stop-color="#12121C"/>
-      <stop offset="100%" stop-color="#1A1228"/>
+      <stop offset="0%" stop-color="#0B0B0F"/>
+      <stop offset="45%" stop-color="#0B0B0F"/>
+      <stop offset="100%" stop-color="#140B22"/>
     </linearGradient>
     <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#7C3AED"/>
-      <stop offset="100%" stop-color="#A78BFA"/>
+      <stop offset="0%" stop-color="#5B21B6"/>
+      <stop offset="50%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#C4B5FD"/>
     </linearGradient>
-    <radialGradient id="glow" cx="82%" cy="28%" r="42%">
-      <stop offset="0%" stop-color="#7C3AED" stop-opacity="0.28"/>
-      <stop offset="70%" stop-color="#7C3AED" stop-opacity="0.06"/>
-      <stop offset="100%" stop-color="#7C3AED" stop-opacity="0"/>
+    <linearGradient id="line" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0"/>
+      <stop offset="35%" stop-color="#8B5CF6" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="78%" cy="22%" r="48%">
+      <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.30"/>
+      <stop offset="45%" stop-color="#5B21B6" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#0B0B0F" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="18%" cy="88%" r="36%">
+      <stop offset="0%" stop-color="#5B21B6" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#0B0B0F" stop-opacity="0"/>
     </radialGradient>
   </defs>
 
-  <rect width="1200" height="320" fill="url(#bg)"/>
-  <rect width="1200" height="320" fill="url(#glow)"/>
+  <rect width="1200" height="360" fill="url(#bg)"/>
+  <rect width="1200" height="360" fill="url(#glow)"/>
+  <rect width="1200" height="360" fill="url(#glow2)"/>
 
-  <!-- subtle grid -->
-  <g stroke="#A78BFA" stroke-opacity="0.05" stroke-width="1">
-    <path d="M0 80 H1200 M0 160 H1200 M0 240 H1200"/>
-    <path d="M200 0 V320 M400 0 V320 M600 0 V320 M800 0 V320 M1000 0 V320"/>
+  <!-- faint infra grid -->
+  <g stroke="#8B5CF6" stroke-opacity="0.06" stroke-width="1" fill="none">
+    <path d="M0 72 H1200 M0 144 H1200 M0 216 H1200 M0 288 H1200"/>
+    <path d="M150 0 V360 M300 0 V360 M450 0 V360 M600 0 V360 M750 0 V360 M900 0 V360 M1050 0 V360"/>
   </g>
 
-  <!-- accent bar -->
-  <rect x="72" y="92" width="4" height="136" rx="2" fill="url(#accent)"/>
+  <!-- network / cloud topology (right side) -->
+  <g fill="none" stroke="#8B5CF6" stroke-width="1.4" stroke-opacity="0.45">
+    <path d="M820 118 L910 86 L1002 118 L1002 182 L910 214 L820 182 Z"/>
+    <path d="M910 86 L910 214"/>
+    <path d="M820 118 L1002 182"/>
+    <path d="M1002 118 L820 182"/>
+    <circle cx="820" cy="118" r="4.5" fill="#8B5CF6" stroke="none"/>
+    <circle cx="910" cy="86" r="4.5" fill="#FFFFFF" fill-opacity="0.85" stroke="none"/>
+    <circle cx="1002" cy="118" r="4.5" fill="#8B5CF6" stroke="none"/>
+    <circle cx="1002" cy="182" r="4.5" fill="#5B21B6" stroke="none"/>
+    <circle cx="910" cy="214" r="4.5" fill="#8B5CF6" stroke="none"/>
+    <circle cx="820" cy="182" r="4.5" fill="#C4B5FD" stroke="none"/>
+  </g>
 
-  <text x="96" y="128" fill="#EDE9FE" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="40" font-weight="700">
+  <!-- secondary nodes suggesting distributed infra -->
+  <g fill="#8B5CF6">
+    <circle cx="1048" cy="250" r="3" fill-opacity="0.7"/>
+    <circle cx="1088" cy="270" r="2.5" fill-opacity="0.45"/>
+    <circle cx="1068" cy="292" r="2" fill-opacity="0.35"/>
+  </g>
+  <g fill="none" stroke="#8B5CF6" stroke-opacity="0.28" stroke-width="1">
+    <path d="M1002 182 L1048 250 L1088 270 L1068 292"/>
+  </g>
+
+  <!-- left accent bar -->
+  <rect x="72" y="96" width="4" height="168" rx="2" fill="url(#accent)"/>
+
+  <!-- top hairline -->
+  <rect x="72" y="72" width="420" height="1" fill="url(#line)"/>
+
+  <text x="96" y="142" fill="#FFFFFF" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="40" font-weight="700">
     Humberto Bezerra de Oliveira
   </text>
 
-  <text x="96" y="172" fill="#A78BFA" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="22" font-weight="600">
+  <text x="96" y="188" fill="#8B5CF6" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="22" font-weight="600">
     Cloud Computing · Infrastructure · DevOps
   </text>
 
-  <text x="96" y="214" fill="#9CA3AF" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="16">
+  <text x="96" y="230" fill="#FFFFFF" fill-opacity="0.62" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="16">
     Brasília, DF · SENAI · WorldSkills #53
   </text>
+
+  <!-- bottom accent line -->
+  <rect x="96" y="268" width="220" height="2" rx="1" fill="url(#accent)" fill-opacity="0.85"/>
 </svg>

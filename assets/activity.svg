@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="220" viewBox="0 0 900 220" role="img" aria-label="Contribution activity">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B0B0F"/>
+      <stop offset="100%" stop-color="#140B22"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#5B21B6"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="220" rx="12" fill="url(#bg)" stroke="#8B5CF6" stroke-opacity="0.35"/>
+  <text x="28" y="40" fill="#FFFFFF" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="18" font-weight="700">Contribution activity</text>
+  <text x="28" y="62" fill="#8B5CF6" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="12">Last 12 months | 21 contributions total | source: GitHub API</text>
+
+  <line x1="48" y1="180" x2="852" y2="180" stroke="#8B5CF6" stroke-opacity="0.25" stroke-width="1"/>
+
+  <g font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="11" fill="#FFFFFF" fill-opacity="0.55">
+    <!-- Dec..Aug: 0 contributions (muted markers) -->
+    <rect x="55" y="178" width="46" height="2" rx="1" fill="#2E1065"/>
+    <text x="78" y="198" text-anchor="middle">Dec</text>
+    <rect x="125" y="178" width="46" height="2" rx="1" fill="#2E1065"/>
+    <text x="148" y="198" text-anchor="middle">Jan</text>
+    <rect x="195" y="178" width="46" height="2" rx="1" fill="#2E1065"/>
+    <text x="218" y="198" text-anchor="middle">Feb</text>
+    <rect x="265" y="178" width="46" height="2" rx="1" fill="#2E1065"/>
+    <text x="288" y="198" text-anchor="middle">Mar</text>
+    <rect x="335" y="178" width="46" height="2" rx="1" fill="#2E1065"/>
+    <text x="358" y="198" text-anchor="middle">Apr</text>
+    <rect x="405" y="178" width="46" height="2" rx="1" fill="#2E1065"/>
+    <text x="428" y="198" text-anchor="middle">May</text>
+    <rect x="475" y="178" width="46" height="2" rx="1" fill="#2E1065"/>
+    <text x="498" y="198" text-anchor="middle">Jun</text>
+    <rect x="545" y="178" width="46" height="2" rx="1" fill="#2E1065"/>
+    <text x="568" y="198" text-anchor="middle">Jul</text>
+    <rect x="615" y="178" width="46" height="2" rx="1" fill="#2E1065"/>
+    <text x="638" y="198" text-anchor="middle">Aug</text>
+
+    <!-- Sep 4 / 12 * 90 = 30 -->
+    <rect x="685" y="150" width="46" height="30" rx="4" fill="url(#bar)"/>
+    <text x="708" y="144" fill="#C4B5FD" fill-opacity="1" text-anchor="middle">4</text>
+    <text x="708" y="198" text-anchor="middle">Sep</text>
+
+    <!-- Oct 12 / 12 * 90 = 90 -->
+    <rect x="755" y="90" width="46" height="90" rx="4" fill="url(#bar)"/>
+    <text x="778" y="84" fill="#FFFFFF" fill-opacity="0.95" text-anchor="middle">12</text>
+    <text x="778" y="198" text-anchor="middle">Oct</text>
+
+    <!-- Nov 5 / 12 * 90 = 37.5 -->
+    <rect x="825" y="142" width="46" height="38" rx="4" fill="url(#bar)"/>
+    <text x="848" y="136" fill="#C4B5FD" fill-opacity="1" text-anchor="middle">5</text>
+    <text x="848" y="198" text-anchor="middle">Nov</text>
+  </g>
+</svg>

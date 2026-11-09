@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="210" viewBox="0 0 420 210" role="img" aria-label="Top languages">
+  <defs>
+    <linearGradient id="card" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B0B0F"/>
+      <stop offset="100%" stop-color="#140B22"/>
+    </linearGradient>
+  </defs>
+  <rect width="420" height="210" rx="12" fill="url(#card)" stroke="#8B5CF6" stroke-opacity="0.35"/>
+  <text x="28" y="40" fill="#FFFFFF" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="18" font-weight="700">Top Languages</text>
+  <text x="28" y="60" fill="#8B5CF6" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="12">Primary language across repos · GitHub API</text>
+
+  <text x="28" y="92" fill="#FFFFFF" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="13">Python</text>
+  <text x="392" y="92" fill="#FFFFFF" fill-opacity="0.7" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="12" text-anchor="end">56%</text>
+  <rect x="28" y="100" width="364" height="8" rx="4" fill="#2E1065"/>
+  <rect x="28" y="100" width="202" height="8" rx="4" fill="#8B5CF6"/>
+
+  <text x="28" y="128" fill="#FFFFFF" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="13">Shell</text>
+  <text x="392" y="128" fill="#FFFFFF" fill-opacity="0.7" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="12" text-anchor="end">22%</text>
+  <rect x="28" y="136" width="364" height="8" rx="4" fill="#2E1065"/>
+  <rect x="28" y="136" width="81" height="8" rx="4" fill="#7C3AED"/>
+
+  <text x="28" y="164" fill="#FFFFFF" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="13">HTML</text>
+  <text x="392" y="164" fill="#FFFFFF" fill-opacity="0.7" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="12" text-anchor="end">11%</text>
+  <rect x="28" y="172" width="364" height="8" rx="4" fill="#2E1065"/>
+  <rect x="28" y="172" width="40" height="8" rx="4" fill="#5B21B6"/>
+
+  <text x="28" y="200" fill="#FFFFFF" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="13">TypeScript</text>
+  <text x="392" y="200" fill="#FFFFFF" fill-opacity="0.7" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="12" text-anchor="end">11%</text>
+</svg>
