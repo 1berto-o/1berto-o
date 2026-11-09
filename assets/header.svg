@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-label="Humberto Bezerra de Oliveira  Cloud, Infrastructure, DevOps">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B0B12"/>
+      <stop offset="55%" stop-color="#12121C"/>
+      <stop offset="100%" stop-color="#1A1228"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#A78BFA"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="82%" cy="28%" r="42%">
+      <stop offset="0%" stop-color="#7C3AED" stop-opacity="0.28"/>
+      <stop offset="70%" stop-color="#7C3AED" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#7C3AED" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="320" fill="url(#bg)"/>
+  <rect width="1200" height="320" fill="url(#glow)"/>
+
+  <!-- subtle grid -->
+  <g stroke="#A78BFA" stroke-opacity="0.05" stroke-width="1">
+    <path d="M0 80 H1200 M0 160 H1200 M0 240 H1200"/>
+    <path d="M200 0 V320 M400 0 V320 M600 0 V320 M800 0 V320 M1000 0 V320"/>
+  </g>
+
+  <!-- accent bar -->
+  <rect x="72" y="92" width="4" height="136" rx="2" fill="url(#accent)"/>
+
+  <text x="96" y="128" fill="#EDE9FE" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="40" font-weight="700">
+    Humberto Bezerra de Oliveira
+  </text>
+
+  <text x="96" y="172" fill="#A78BFA" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="22" font-weight="600">
+    Cloud Computing · Infrastructure · DevOps
+  </text>
+
+  <text x="96" y="214" fill="#9CA3AF" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="16">
+    Brasília, DF · SENAI · WorldSkills #53
+  </text>
+</svg>
