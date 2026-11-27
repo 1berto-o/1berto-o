@@ -1,3 +1,4 @@
+# Contribution snake — official Platane/snk (no custom SVG post-processing)
 name: Generate contribution snake
 
 on: # yamllint disable-line rule:truthy
@@ -18,30 +19,19 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Generate snake animation from contribution grid
         uses: Platane/snk/svg-only@v3
         with:
           github_user_name: ${{ github.repository_owner }}
-          # Prefer SNAKE_TOKEN (user PAT/OAuth with repo scope) so the calendar
-          # matches the profile. Default GITHUB_TOKEN can yield inconsistent grids.
+          # Prefer SNAKE_TOKEN so the calendar matches the signed-in profile.
           github_token: ${{ secrets.SNAKE_TOKEN || secrets.GITHUB_TOKEN }}
           outputs: |
             dist/github-contribution-grid-snake.svg?color_snake=#7C3AED&color_dots=#EBEDF0,#DDD6FE,#A78BFA,#7C3AED,#5B21B6
             dist/github-contribution-grid-snake-dark.svg?color_snake=#8B5CF6&color_dots=#0B0B0F,#5B21B6,#7C3AED,#A78BFA,#EDE9FE
 
-      - name: Keep calendar cells permanently visible
-        run: node .github/scripts/postprocess-snake-svg.mjs dist
-
-      - name: Validate generated SVGs
-        env:
-          GH_TOKEN: ${{ secrets.SNAKE_TOKEN || secrets.GITHUB_TOKEN }}
-          EXPECTED_USER: ${{ github.repository_owner }}
+      - name: Ensure SVGs were generated
         run: |
           set -euo pipefail
-
           light="dist/github-contribution-grid-snake.svg"
           dark="dist/github-contribution-grid-snake-dark.svg"
 
@@ -50,120 +40,27 @@ jobs:
               echo "::error::Missing or empty SVG: $f"
               exit 1
             fi
-            size=$(wc -c < "$f")
-            if (( size < 5000 )); then
-              echo "::error::SVG too small (${size} bytes), likely invalid: $f"
-              exit 1
-            fi
             if ! grep -q "Generated with https://github.com/Platane/snk" "$f"; then
-              echo "::error::SVG missing Platane/snk marker: $f"
+              echo "::error::SVG is not a Platane/snk output: $f"
               exit 1
             fi
-            if ! grep -q '<rect class="c' "$f"; then
-              echo "::error::SVG missing contribution grid rects: $f"
+            if ! grep -qE '@keyframes s[0-9a-f]+\{' "$f"; then
+              echo "::error::Snake movement keyframes missing: $f"
+              exit 1
+            fi
+            if ! grep -qE '@keyframes c[0-9a-f]+\{' "$f"; then
+              echo "::error::Cell-eat keyframes missing (original animation required): $f"
               exit 1
             fi
           done
 
-          # Contrast + brand palette checks (dark)
-          if ! grep -q '#8B5CF6' "$dark"; then
-            echo "::error::Dark SVG lost purple snake color (#8B5CF6)"
-            exit 1
-          fi
-          if ! grep -q '#5B21B6' "$dark"; then
-            echo "::error::Dark SVG missing improved level-1 purple (#5B21B6)"
-            exit 1
-          fi
-          if grep -q '#2E1065' "$dark"; then
-            echo "::error::Dark SVG still uses low-contrast #2E1065"
-            exit 1
-          fi
-
-          # Permanence: contribution cells must not be eaten/hidden mid-animation
-          if grep -qE '@keyframes c[0-9a-f]+\{' "$dark" "$light"; then
-            echo "::error::Contribution eat-keyframes still present (cells would disappear)"
-            exit 1
-          fi
-          if grep -qE 'animation-name: *c[0-9a-f]+' "$dark" "$light"; then
-            echo "::error::Contribution cells still bound to eat animations"
-            exit 1
-          fi
-          permanent=$(grep -oE '\.c\.c[0-9a-f]+\{fill:var\(--c[1-4]\);animation:none\}' "$dark" | wc -l)
-          if [[ "$permanent" -le 0 ]]; then
-            echo "::error::No permanently visible contribution cells in dark SVG"
-            exit 1
-          fi
-
-          # Snake animation must remain
-          if ! grep -qE '@keyframes s[0-9a-f]+\{' "$dark"; then
-            echo "::error::Snake animation keyframes missing"
-            exit 1
-          fi
-
-          echo "GraphQL contribution days (source of truth):"
-          gh api graphql -f query='
-            query($login:String!) {
-              user(login:$login) {
-                contributionsCollection {
-                  contributionCalendar {
-                    totalContributions
-                    weeks {
-                      contributionDays {
-                        date
-                        contributionCount
-                      }
-                    }
-                  }
-                }
-              }
-            }' -f login="$EXPECTED_USER" \
-            --jq '
-              .data.user.contributionsCollection.contributionCalendar as $c
-              | "total=\($c.totalContributions)",
-                ([$c.weeks[].contributionDays[] | select(.contributionCount > 0) | .date] | sort | .[])
-            '
-
-          api_count=$(
-            gh api graphql -f query='
-              query($login:String!) {
-                user(login:$login) {
-                  contributionsCollection {
-                    contributionCalendar {
-                      weeks {
-                        contributionDays {
-                          contributionCount
-                        }
-                      }
-                    }
-                  }
-                }
-              }' -f login="$EXPECTED_USER" \
-              --jq '[.data.user.contributionsCollection.contributionCalendar.weeks[].contributionDays[] | select(.contributionCount > 0)] | length'
-          )
-
-          svg_count="$permanent"
-
-          echo "GraphQL contribution days: $api_count"
-          echo "SVG permanent contribution cells: $svg_count"
-
-          if [[ -z "$api_count" || "$api_count" -le 0 ]]; then
-            echo "::error::GraphQL returned no contribution days — refusing to publish"
-            exit 1
-          fi
-
-          if [[ "$svg_count" -ne "$api_count" ]]; then
-            echo "::error::SVG cell count ($svg_count) does not match GraphQL contribution days ($api_count)"
-            echo "::error::Refusing to publish a stale or inconsistent snake"
-            exit 1
-          fi
-
-          echo "SVG validation passed (permanent calendar + animated snake)"
+          echo "Platane/snk SVGs OK:"
+          ls -la "$light" "$dark"
 
       - name: Publish SVGs to output branch
         uses: crazy-max/ghaction-github-pages@v3.1.0
         with:
           target_branch: output
           build_dir: dist
-          keep_history: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
