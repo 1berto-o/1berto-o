@@ -32,7 +32,7 @@ jobs:
             dist/github-contribution-grid-snake.svg?color_snake=#7C3AED&color_dots=#EBEDF0,#DDD6FE,#A78BFA,#7C3AED,#5B21B6
             dist/github-contribution-grid-snake-dark.svg?color_snake=#8B5CF6&color_dots=#0B0B0F,#5B21B6,#7C3AED,#A78BFA,#EDE9FE
 
-      - name: Compose static calendar base + original snake animation
+      - name: Keep calendar cells permanently visible
         run: node .github/scripts/postprocess-snake-svg.mjs dist
 
       - name: Validate generated SVGs
@@ -63,43 +63,6 @@ jobs:
               echo "::error::SVG missing contribution grid rects: $f"
               exit 1
             fi
-
-            # Dual-layer contract
-            if ! grep -q 'id="calendar-base"' "$f"; then
-              echo "::error::Missing static calendar-base layer: $f"
-              exit 1
-            fi
-            if ! grep -qE '@keyframes c[0-9a-f]+\{' "$f"; then
-              echo "::error::Missing original eat keyframes c*: $f"
-              exit 1
-            fi
-            if ! grep -qE '@keyframes s[0-9a-f]+\{' "$f"; then
-              echo "::error::Missing snake keyframes s*: $f"
-              exit 1
-            fi
-            if ! grep -qE 'animation-name: *c[0-9a-f]+' "$f"; then
-              echo "::error::Animated contribution cells lost animation-name: $f"
-              exit 1
-            fi
-            if grep -qE '\.c\.c[0-9a-f]+\{fill:var\(--c[1-4]\);animation:none\}' "$f"; then
-              echo "::error::Animated layer incorrectly frozen with animation:none: $f"
-              exit 1
-            fi
-            if grep -qE '@keyframes c[0-9a-f]+\{.*fill:var\(--ce\)' "$f"; then
-              echo "::error::Eat keyframes still paint opaque --ce over the base: $f"
-              exit 1
-            fi
-            if ! grep -q 'fill:transparent' "$f"; then
-              echo "::error::Eat keyframes missing transparent reveal: $f"
-              exit 1
-            fi
-
-            base_count=$(grep -oE '<rect class="cb c[0-9a-f]+"' "$f" | wc -l)
-            anim_count=$(grep -oE '<rect class="c c[0-9a-f]+"' "$f" | wc -l)
-            if [[ "$base_count" -le 0 || "$base_count" -ne "$anim_count" ]]; then
-              echo "::error::Base/animated cell mismatch in $f ($base_count vs $anim_count)"
-              exit 1
-            fi
           done
 
           # Contrast + brand palette checks (dark)
@@ -113,6 +76,27 @@ jobs:
           fi
           if grep -q '#2E1065' "$dark"; then
             echo "::error::Dark SVG still uses low-contrast #2E1065"
+            exit 1
+          fi
+
+          # Permanence: contribution cells must not be eaten/hidden mid-animation
+          if grep -qE '@keyframes c[0-9a-f]+\{' "$dark" "$light"; then
+            echo "::error::Contribution eat-keyframes still present (cells would disappear)"
+            exit 1
+          fi
+          if grep -qE 'animation-name: *c[0-9a-f]+' "$dark" "$light"; then
+            echo "::error::Contribution cells still bound to eat animations"
+            exit 1
+          fi
+          permanent=$(grep -oE '\.c\.c[0-9a-f]+\{fill:var\(--c[1-4]\);animation:none\}' "$dark" | wc -l)
+          if [[ "$permanent" -le 0 ]]; then
+            echo "::error::No permanently visible contribution cells in dark SVG"
+            exit 1
+          fi
+
+          # Snake animation must remain
+          if ! grep -qE '@keyframes s[0-9a-f]+\{' "$dark"; then
+            echo "::error::Snake animation keyframes missing"
             exit 1
           fi
 
@@ -157,10 +141,10 @@ jobs:
               --jq '[.data.user.contributionsCollection.contributionCalendar.weeks[].contributionDays[] | select(.contributionCount > 0)] | length'
           )
 
-          svg_count=$(grep -oE '<rect class="cb c[0-9a-f]+"' "$dark" | wc -l)
+          svg_count="$permanent"
 
           echo "GraphQL contribution days: $api_count"
-          echo "SVG base-layer contribution cells: $svg_count"
+          echo "SVG permanent contribution cells: $svg_count"
 
           if [[ -z "$api_count" || "$api_count" -le 0 ]]; then
             echo "::error::GraphQL returned no contribution days — refusing to publish"
@@ -173,7 +157,7 @@ jobs:
             exit 1
           fi
 
-          echo "SVG validation passed (static base + original eat/snake animation)"
+          echo "SVG validation passed (permanent calendar + animated snake)"
 
       - name: Publish SVGs to output branch
         uses: crazy-max/ghaction-github-pages@v3.1.0
