@@ -95,5 +95,8 @@ jobs:
         with:
           commit_message: "chore: refresh profile contribution cards from GitHub API"
           file_pattern: assets/activity.svg assets/stats.svg assets/languages.svg
+          # Must be the Actions bot — using the repo owner as author inflates
+          # the contribution calendar on every refresh.
           commit_user_name: github-actions[bot]
           commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          commit_author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
