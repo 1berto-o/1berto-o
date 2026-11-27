@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 /**
- * Post-process Platane/snk SVGs so contribution cells stay permanently visible.
+ * Dual-layer post-process for Platane/snk SVGs.
  *
- * snk animates each "eaten" cell from its contribution color to the empty color.
- * That hides active days mid-animation. We keep the snake + stack animations,
- * but freeze the calendar fill so every contribution day remains readable.
+ * Layer 1 — calendar-base (behind): static contribution cells, always visible.
+ * Layer 2 — original snk animation (front): c* eat keyframes + s* snake + u* stack.
+ *
+ * Eat keyframes are kept, but the "eaten" fill becomes transparent so the base
+ * layer shows through instead of being covered by an opaque empty color.
  */
 import { readFileSync, writeFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -25,51 +27,128 @@ const PALETTES = {
   },
 };
 
+/** Base layer opacity: eaten cells dim but remain readable. */
+const BASE_OPACITY = "0.55";
+
 const isDarkFile = (name) => /dark/i.test(name);
 
 const applyRootVars = (svg, palette) => {
   const [c0, c1, c2, c3, c4] = palette.dots;
-  return svg.replace(/:root\{[^}]*\}/, () => {
-    return `:root{--cb:#1b1f230a;--cs:${palette.snake};--ce:${palette.empty};--c0:${c0};--c1:${c1};--c2:${c2};--c3:${c3};--c4:${c4}}`;
-  });
+  return svg.replace(
+    /:root\{[^}]*\}/,
+    `:root{--cb:#1b1f230a;--cs:${palette.snake};--ce:${palette.empty};--c0:${c0};--c1:${c1};--c2:${c2};--c3:${c3};--c4:${c4}}`,
+  );
 };
 
 /**
- * Freeze contribution calendar cells:
- * - keep static fill:var(--cN)
- * - disable the eat-to-empty animation on .c.c*
- * - drop @keyframes c* so nothing can hide them later
- * Snake (.s) and stack (.u) animations are untouched.
+ * Make eaten cells transparent (not opaque empty) so the static base shows through.
+ * Preserves every @keyframes c* block and timing.
  */
-const freezeContributionCells = (svg) => {
-  let out = svg;
-
-  // .c.c0{fill:var(--c1);animation-name:c0} -> permanent fill, no animation
-  out = out.replace(
-    /\.c\.(c[0-9a-f]+)\s*\{\s*fill:\s*(var\(--c[0-4]\))\s*;\s*animation-name:\s*c[0-9a-f]+\s*\}/g,
-    ".c.$1{fill:$2;animation:none}",
+const makeEatRevealBase = (svg) =>
+  svg.replace(
+    /(@keyframes c[0-9a-f]+\{(?:[^{}]|\{[^{}]*\})*\})/g,
+    (block) => block.replace(/fill:var\(--ce\)/g, "fill:transparent"),
   );
 
-  // Remove contribution-cell keyframes (c0, c1, ...). Keep u* and s*.
-  // snk emits compact keyframes: @keyframes c0{31%{fill:var(--c1)}32%,100%{fill:var(--ce)}}
-  out = out.replace(/@keyframes c[0-9a-f]+\{(?:[^{}]|\{[^{}]*\})*\}/g, "");
+/**
+ * Build a static underlay of contribution cells (class cb*) + CSS.
+ * Inserted immediately after </style>, behind the animated grid.
+ */
+const injectStaticBaseLayer = (svg) => {
+  const contribRuleRe =
+    /\.c\.(c[0-9a-f]+)\s*\{\s*fill:\s*(var\(--c[1-4]\))\s*;\s*animation-name:\s*(c[0-9a-f]+)\s*\}/g;
 
-  return out;
+  const rules = [...svg.matchAll(contribRuleRe)];
+  if (rules.length === 0) {
+    throw new Error("No animated contribution cell rules (.c.c*) found");
+  }
+
+  // Map animated class id -> fill var, e.g. c0 -> var(--c1)
+  const fillById = new Map(rules.map((m) => [m[1], m[2]]));
+
+  const contribRectRe =
+    /<rect class="c (c[0-9a-f]+)"([^>]*)\/>/g;
+  const rects = [...svg.matchAll(contribRectRe)];
+  if (rects.length === 0) {
+    throw new Error("No contribution rects found");
+  }
+
+  const baseStyles = [
+    `.cb{shape-rendering:geometricPrecision;stroke-width:1px;stroke:var(--cb);animation:none;width:12px;height:12px}`,
+    ...[...fillById.entries()].map(
+      ([id, fill]) => `.cb.${id}{fill:${fill}}`,
+    ),
+  ].join("");
+
+  const baseRects = rects
+    .map((m) => {
+      const id = m[1];
+      const attrs = m[2];
+      if (!fillById.has(id)) {
+        throw new Error(`Missing fill rule for contribution cell ${id}`);
+      }
+      return `<rect class="cb ${id}"${attrs}/>`;
+    })
+    .join("");
+
+  const baseGroup = `<g id="calendar-base" opacity="${BASE_OPACITY}">${baseRects}</g>`;
+
+  // Inject base CSS before </style>
+  let out = svg.replace("</style>", `${baseStyles}</style>`);
+
+  // Inject base group right after </style> (behind subsequent animated rects)
+  out = out.replace("</style>", `</style>${baseGroup}`);
+
+  return { svg: out, baseCount: rects.length, animatedRules: rules.length };
 };
 
-const assertFrozen = (svg, file) => {
-  if (/@keyframes c[0-9a-f]+\{/.test(svg)) {
-    throw new Error(`${file}: contribution keyframes still present`);
+const assertDualLayer = (svg, file) => {
+  if (!svg.includes('id="calendar-base"')) {
+    throw new Error(`${file}: missing calendar-base layer`);
   }
-  if (/animation-name:\s*c[0-9a-f]+/.test(svg)) {
-    throw new Error(`${file}: contribution cells still reference eat animations`);
+  const cKeys = (svg.match(/@keyframes c[0-9a-f]+\{/g) || []).length;
+  const sKeys = (svg.match(/@keyframes s[0-9a-f]+\{/g) || []).length;
+  const uKeys = (svg.match(/@keyframes u[0-9a-f]+\{/g) || []).length;
+  if (cKeys < 1) throw new Error(`${file}: contribution eat keyframes c* missing`);
+  if (sKeys < 1) throw new Error(`${file}: snake keyframes s* missing`);
+  if (uKeys < 1) throw new Error(`${file}: stack keyframes u* missing`);
+
+  // Animated cells must still reference c* animations (not animation:none)
+  const animated = (
+    svg.match(
+      /\.c\.c[0-9a-f]+\s*\{\s*fill:\s*var\(--c[1-4]\)\s*;\s*animation-name:\s*c[0-9a-f]+\s*\}/g,
+    ) || []
+  ).length;
+  if (animated < 1) {
+    throw new Error(`${file}: animated contribution cells lost animation-name`);
   }
-  const permanent = (svg.match(/\.c\.c[0-9a-f]+\{fill:var\(--c[1-4]\);animation:none\}/g) || [])
-    .length;
-  if (permanent < 1) {
-    throw new Error(`${file}: no permanently visible contribution cells found`);
+
+  // Eaten state must reveal base (transparent), not paint opaque empty over it
+  const cBlocks = svg.match(/@keyframes c[0-9a-f]+\{(?:[^{}]|\{[^{}]*\})*\}/g) || [];
+  for (const block of cBlocks) {
+    if (/fill:var\(--ce\)/.test(block)) {
+      throw new Error(`${file}: eat keyframe still uses opaque --ce`);
+    }
+    if (!/fill:transparent/.test(block)) {
+      throw new Error(`${file}: eat keyframe missing transparent reveal`);
+    }
   }
-  return permanent;
+
+  const baseCells = (svg.match(/<rect class="cb c[0-9a-f]+"/g) || []).length;
+  if (baseCells !== animated) {
+    throw new Error(
+      `${file}: base/animated cell mismatch (${baseCells} vs ${animated})`,
+    );
+  }
+
+  // Ensure base group appears before the first animated contribution rect
+  const basePos = svg.indexOf('id="calendar-base"');
+  const firstAnim = svg.search(/<rect class="c c[0-9a-f]+"/);
+  if (basePos < 0 || firstAnim < 0 || basePos > firstAnim) {
+    throw new Error(`${file}: calendar-base must be behind animated cells`);
+  }
+
+  return { baseCells, animated, cKeys, sKeys, uKeys };
 };
 
 const files = readdirSync(distDir).filter((f) => f.endsWith(".svg"));
@@ -83,9 +162,17 @@ for (const file of files) {
   let svg = readFileSync(path, "utf8");
   const palette = isDarkFile(file) ? PALETTES.dark : PALETTES.light;
 
+  // Idempotent: strip a previous calendar-base if re-run
+  svg = svg.replace(/<g id="calendar-base"[^>]*>[\s\S]*?<\/g>/, "");
+  svg = svg.replace(/\.cb\{[^}]*\}/g, "");
+  svg = svg.replace(/\.cb\.c[0-9a-f]+\{[^}]*\}/g, "");
+
   svg = applyRootVars(svg, palette);
-  svg = freezeContributionCells(svg);
-  const permanent = assertFrozen(svg, file);
+  svg = makeEatRevealBase(svg);
+  const injected = injectStaticBaseLayer(svg);
+  svg = injected.svg;
+
+  const stats = assertDualLayer(svg, file);
 
   if (!svg.includes(palette.snake)) {
     throw new Error(`${file}: missing snake color ${palette.snake}`);
@@ -93,7 +180,6 @@ for (const file of files) {
   if (!svg.includes(palette.dots[1])) {
     throw new Error(`${file}: missing level-1 color ${palette.dots[1]}`);
   }
-  // Ensure low-contrast legacy dark color is gone from dark SVG
   if (isDarkFile(file) && svg.includes("#2E1065")) {
     throw new Error(`${file}: legacy low-contrast #2E1065 still present`);
   }
@@ -102,7 +188,8 @@ for (const file of files) {
   console.log(
     JSON.stringify({
       file,
-      permanentContributionCells: permanent,
+      ...stats,
+      baseOpacity: BASE_OPACITY,
       palette: isDarkFile(file) ? "dark-purple" : "light-purple",
       empty: palette.empty,
       dots: palette.dots,
