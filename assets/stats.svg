@@ -11,7 +11,7 @@
 
   <g font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="14">
     <text x="28" y="104" fill="#FFFFFF" fill-opacity="0.72">Total contributions</text>
-    <text x="392" y="104" fill="#FFFFFF" font-weight="700" text-anchor="end">31</text>
+    <text x="392" y="104" fill="#FFFFFF" font-weight="700" text-anchor="end">32</text>
 
     <text x="28" y="132" fill="#FFFFFF" fill-opacity="0.72">Public repositories</text>
     <text x="392" y="132" fill="#FFFFFF" font-weight="700" text-anchor="end">5</text>
