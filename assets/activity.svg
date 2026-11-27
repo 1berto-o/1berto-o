@@ -11,12 +11,11 @@
   </defs>
   <rect width="900" height="220" rx="12" fill="url(#bg)" stroke="#8B5CF6" stroke-opacity="0.35"/>
   <text x="28" y="40" fill="#FFFFFF" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="18" font-weight="700">Contribution activity</text>
-  <text x="28" y="62" fill="#8B5CF6" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="12">Last 12 months | 21 contributions total | source: GitHub API</text>
+  <text x="28" y="62" fill="#8B5CF6" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="12">Last 12 months | 29 contributions total | source: GitHub API</text>
 
   <line x1="48" y1="180" x2="852" y2="180" stroke="#8B5CF6" stroke-opacity="0.25" stroke-width="1"/>
 
   <g font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="11" fill="#FFFFFF" fill-opacity="0.55">
-    <!-- Dec..Aug: 0 contributions (muted markers) -->
     <rect x="55" y="178" width="46" height="2" rx="1" fill="#2E1065"/>
     <text x="78" y="198" text-anchor="middle">Dec</text>
     <rect x="125" y="178" width="46" height="2" rx="1" fill="#2E1065"/>
@@ -35,20 +34,14 @@
     <text x="568" y="198" text-anchor="middle">Jul</text>
     <rect x="615" y="178" width="46" height="2" rx="1" fill="#2E1065"/>
     <text x="638" y="198" text-anchor="middle">Aug</text>
-
-    <!-- Sep 4 / 12 * 90 = 30 -->
-    <rect x="685" y="150" width="46" height="30" rx="4" fill="url(#bar)"/>
-    <text x="708" y="144" fill="#C4B5FD" fill-opacity="1" text-anchor="middle">4</text>
+    <rect x="685" y="152" width="46" height="28" rx="4" fill="url(#bar)"/>
+    <text x="708" y="146" fill="#C4B5FD" fill-opacity="1" text-anchor="middle">4</text>
     <text x="708" y="198" text-anchor="middle">Sep</text>
-
-    <!-- Oct 12 / 12 * 90 = 90 -->
-    <rect x="755" y="90" width="46" height="90" rx="4" fill="url(#bar)"/>
-    <text x="778" y="84" fill="#FFFFFF" fill-opacity="0.95" text-anchor="middle">12</text>
+    <rect x="755" y="97" width="46" height="83" rx="4" fill="url(#bar)"/>
+    <text x="778" y="91" fill="#C4B5FD" fill-opacity="1" text-anchor="middle">12</text>
     <text x="778" y="198" text-anchor="middle">Oct</text>
-
-    <!-- Nov 5 / 12 * 90 = 37.5 -->
-    <rect x="825" y="142" width="46" height="38" rx="4" fill="url(#bar)"/>
-    <text x="848" y="136" fill="#C4B5FD" fill-opacity="1" text-anchor="middle">5</text>
+    <rect x="825" y="90" width="46" height="90" rx="4" fill="url(#bar)"/>
+    <text x="848" y="84" fill="#FFFFFF" fill-opacity="0.95" text-anchor="middle">13</text>
     <text x="848" y="198" text-anchor="middle">Nov</text>
   </g>
 </svg>

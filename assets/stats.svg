@@ -11,10 +11,10 @@
 
   <g font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="14">
     <text x="28" y="104" fill="#FFFFFF" fill-opacity="0.72">Total contributions</text>
-    <text x="392" y="104" fill="#FFFFFF" font-weight="700" text-anchor="end">21</text>
+    <text x="392" y="104" fill="#FFFFFF" font-weight="700" text-anchor="end">29</text>
 
     <text x="28" y="132" fill="#FFFFFF" fill-opacity="0.72">Public repositories</text>
-    <text x="392" y="132" fill="#FFFFFF" font-weight="700" text-anchor="end">3</text>
+    <text x="392" y="132" fill="#FFFFFF" font-weight="700" text-anchor="end">5</text>
 
     <text x="28" y="160" fill="#FFFFFF" fill-opacity="0.72">Followers</text>
     <text x="392" y="160" fill="#FFFFFF" font-weight="700" text-anchor="end">10</text>

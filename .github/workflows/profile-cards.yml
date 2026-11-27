@@ -1,0 +1,99 @@
+name: Update profile cards
+
+on: # yamllint disable-line rule:truthy
+  schedule:
+    - cron: "15 */6 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/scripts/generate-profile-cards.mjs"
+      - ".github/workflows/profile-cards.yml"
+
+concurrency:
+  group: profile-cards
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Generate activity, stats, and languages SVGs
+        env:
+          GITHUB_TOKEN: ${{ secrets.SNAKE_TOKEN || secrets.GITHUB_TOKEN }}
+          GITHUB_USER: ${{ github.repository_owner }}
+        run: node .github/scripts/generate-profile-cards.mjs
+
+      - name: Validate generated cards
+        env:
+          GITHUB_TOKEN: ${{ secrets.SNAKE_TOKEN || secrets.GITHUB_TOKEN }}
+          GITHUB_USER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+
+          for f in assets/activity.svg assets/stats.svg assets/languages.svg; do
+            if [[ ! -s "$f" ]]; then
+              echo "::error::Missing or empty: $f"
+              exit 1
+            fi
+            if ! grep -q '<svg' "$f"; then
+              echo "::error::Invalid SVG: $f"
+              exit 1
+            fi
+            if ! grep -q '#8B5CF6' "$f"; then
+              echo "::error::Purple accent missing in $f"
+              exit 1
+            fi
+          done
+
+          api_total=$(
+            gh api graphql -f query='
+              query($login:String!){
+                user(login:$login){
+                  contributionsCollection{
+                    contributionCalendar{ totalContributions }
+                  }
+                }
+              }' -f login="$GITHUB_USER" \
+              --jq '.data.user.contributionsCollection.contributionCalendar.totalContributions'
+          )
+
+          card_total=$(grep -oE '>[0-9]+</text>' assets/stats.svg | head -n1 | tr -dc '0-9')
+          activity_total=$(grep -oE '[0-9]+ contributions total' assets/activity.svg | head -n1 | tr -dc '0-9')
+
+          echo "GraphQL total=$api_total stats.svg=$card_total activity.svg=$activity_total"
+
+          if [[ -z "$api_total" || "$api_total" -le 0 ]]; then
+            echo "::error::GraphQL returned invalid total"
+            exit 1
+          fi
+          if [[ "$card_total" != "$api_total" ]]; then
+            echo "::error::stats.svg total ($card_total) != GraphQL ($api_total)"
+            exit 1
+          fi
+          if [[ "$activity_total" != "$api_total" ]]; then
+            echo "::error::activity.svg total ($activity_total) != GraphQL ($api_total)"
+            exit 1
+          fi
+
+          echo "Profile cards validation passed"
+
+      - name: Commit and push updated assets
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: refresh profile contribution cards from GitHub API"
+          file_pattern: assets/activity.svg assets/stats.svg assets/languages.svg
+          commit_user_name: github-actions[bot]
+          commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
