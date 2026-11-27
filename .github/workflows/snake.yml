@@ -7,8 +7,8 @@ on: # yamllint disable-line rule:truthy
   workflow_dispatch:
 
 concurrency:
-  group: generate-contribution-snake
-  cancel-in-progress: false
+  group: contribution-snake
+  cancel-in-progress: true
 
 jobs:
   generate:
@@ -19,22 +19,20 @@ jobs:
 
     steps:
       - name: Generate snake animation from contribution grid
-        id: generate
         uses: Platane/snk/svg-only@v3
         with:
           github_user_name: ${{ github.repository_owner }}
-          # Prefer a user PAT (repo scope) so private-repo contributions are visible
-          # when "Include private contributions on my profile" is enabled.
-          # Falls back to the workflow token (public calendar only).
-          github_token: ${{ secrets.SNAKE_TOKEN || github.token }}
+          # Prefer SNAKE_TOKEN (user PAT/OAuth with repo scope) so the calendar
+          # matches the profile. Default GITHUB_TOKEN can yield inconsistent grids.
+          github_token: ${{ secrets.SNAKE_TOKEN || secrets.GITHUB_TOKEN }}
           outputs: |
             dist/github-contribution-grid-snake.svg
             dist/github-contribution-grid-snake-dark.svg?palette=github-dark&color_snake=#8B5CF6&color_dots=#0B0B0F,#2E1065,#5B21B6,#8B5CF6,#C4B5FD
 
       - name: Validate generated SVGs
         env:
-          GH_TOKEN: ${{ secrets.SNAKE_TOKEN || github.token }}
-          USERNAME: ${{ github.repository_owner }}
+          GH_TOKEN: ${{ secrets.SNAKE_TOKEN || secrets.GITHUB_TOKEN }}
+          EXPECTED_USER: ${{ github.repository_owner }}
         run: |
           set -euo pipefail
 
@@ -46,64 +44,96 @@ jobs:
               echo "::error::Missing or empty SVG: $f"
               exit 1
             fi
-
-            size="$(wc -c < "$f" | tr -d ' ')"
-            if [[ "$size" -lt 2000 ]]; then
-              echo "::error::SVG suspiciously small (${size} bytes): $f"
+            size=$(wc -c < "$f")
+            if (( size < 5000 )); then
+              echo "::error::SVG too small (${size} bytes), likely invalid: $f"
               exit 1
             fi
-
-            if ! grep -q '<svg' "$f"; then
-              echo "::error::Invalid SVG markup (no <svg>): $f"
+            if ! grep -q "Generated with https://github.com/Platane/snk" "$f"; then
+              echo "::error::SVG missing Platane/snk marker: $f"
               exit 1
             fi
-
-            cells="$(grep -oE 'class="c c[0-9a-f]+"' "$f" | wc -l | tr -d ' ')"
-            echo "Validated $f (${size} bytes, ${cells} contribution cells)"
-
-            if [[ "$cells" -lt 1 ]]; then
-              echo "::error::SVG has no contribution cells: $f"
+            if ! grep -q '<rect class="c' "$f"; then
+              echo "::error::SVG missing contribution grid rects: $f"
               exit 1
             fi
           done
 
-          light_cells="$(grep -oE 'class="c c[0-9a-f]+"' "$light" | wc -l | tr -d ' ')"
-          dark_cells="$(grep -oE 'class="c c[0-9a-f]+"' "$dark" | wc -l | tr -d ' ')"
-          if [[ "$light_cells" -ne "$dark_cells" ]]; then
-            echo "::error::Light/dark contribution cell mismatch: ${light_cells} vs ${dark_cells}"
+          if ! grep -q '#8B5CF6' "$dark"; then
+            echo "::error::Dark SVG lost purple snake color (#8B5CF6)"
+            exit 1
+          fi
+          if ! grep -q '#2E1065' "$dark"; then
+            echo "::error::Dark SVG lost purple palette"
             exit 1
           fi
 
-          # Cross-check against the same contribution calendar the action should mirror.
-          api_cells="$(
-            curl -sS \
-              -H "Authorization: bearer ${GH_TOKEN}" \
-              -H "Content-Type: application/json" \
-              -H "User-Agent: 1berto-o-snake-validator" \
-              --data "{\"query\":\"query(\$login:String!){user(login:\$login){contributionsCollection{contributionCalendar{weeks{contributionDays{contributionCount}}}}}}\",\"variables\":{\"login\":\"${USERNAME}\"}}" \
-              https://api.github.com/graphql \
-            | jq '[.data.user.contributionsCollection.contributionCalendar.weeks[].contributionDays[] | select(.contributionCount > 0)] | length'
-          )"
+          echo "GraphQL contribution days (source of truth):"
+          gh api graphql -f query='
+            query($login:String!) {
+              user(login:$login) {
+                contributionsCollection {
+                  contributionCalendar {
+                    totalContributions
+                    weeks {
+                      contributionDays {
+                        date
+                        contributionCount
+                      }
+                    }
+                  }
+                }
+              }
+            }' -f login="$EXPECTED_USER" \
+            --jq '
+              .data.user.contributionsCollection.contributionCalendar as $c
+              | "total=\($c.totalContributions)",
+                ([$c.weeks[].contributionDays[] | select(.contributionCount > 0) | .date] | sort | .[])
+            '
 
-          echo "GraphQL contribution days: ${api_cells}"
-          echo "SVG contribution cells: ${light_cells}"
+          api_count=$(
+            gh api graphql -f query='
+              query($login:String!) {
+                user(login:$login) {
+                  contributionsCollection {
+                    contributionCalendar {
+                      weeks {
+                        contributionDays {
+                          contributionCount
+                        }
+                      }
+                    }
+                  }
+                }
+              }' -f login="$EXPECTED_USER" \
+              --jq '[.data.user.contributionsCollection.contributionCalendar.weeks[].contributionDays[] | select(.contributionCount > 0)] | length'
+          )
 
-          if [[ -z "$api_cells" || "$api_cells" == "null" ]]; then
-            echo "::error::Failed to query contribution calendar for validation"
+          svg_count=$(grep -oE '\.c\.c[0-9a-f]+\{' "$dark" | wc -l)
+
+          echo "GraphQL contribution days: $api_count"
+          echo "SVG animated contribution cells: $svg_count"
+
+          if [[ -z "$api_count" || "$api_count" -le 0 ]]; then
+            echo "::error::GraphQL returned no contribution days — refusing to publish"
             exit 1
           fi
 
-          if [[ "$light_cells" -lt "$api_cells" ]]; then
-            echo "::error::Generated SVG is outdated/incomplete versus GitHub calendar (${light_cells} < ${api_cells})"
+          if [[ "$svg_count" -le 0 ]]; then
+            echo "::error::SVG has no animated contribution cells — refusing to publish"
             exit 1
           fi
 
-          if [[ "$light_cells" -gt "$api_cells" ]]; then
-            echo "::warning::SVG has more cells than GraphQL calendar (${light_cells} > ${api_cells}); publishing anyway"
+          if [[ "$svg_count" -ne "$api_count" ]]; then
+            echo "::error::SVG cell count ($svg_count) does not match GraphQL contribution days ($api_count)"
+            echo "::error::Refusing to publish a stale or inconsistent snake"
+            exit 1
           fi
+
+          echo "SVG validation passed"
 
       - name: Publish SVGs to output branch
-        uses: crazy-max/ghaction-github-pages@v4
+        uses: crazy-max/ghaction-github-pages@v3.1.0
         with:
           target_branch: output
           build_dir: dist
